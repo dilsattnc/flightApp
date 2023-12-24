@@ -1,0 +1,133 @@
+<div style="width: 45%;">
+<div >
+<form [formGroup]="flightForm" style="display: grid;">
+<mat-form-field>
+  <mat-label>
+    Kalkış Havalimanı
+  </mat-label>
+  <input formControlName="kalkisHavaalani" matInput type="text" [matAutocomplete]="auto" />
+  <mat-autocomplete #auto="matAutocomplete">
+    <mat-option *ngFor="let item of filteredDepartureOptions" [value]="item.kalkisHavaalani">
+    {{item.kalkisHavaalani}} -{{item.kalkisCode}}
+    </mat-option>
+  </mat-autocomplete>
+</mat-form-field>
+
+<mat-form-field>
+  <mat-label>Varış Havalimanı</mat-label>
+  <input formControlName="varisHavaalani" matInput type="text" [matAutocomplete]="auto2" />
+  <mat-autocomplete #auto2="matAutocomplete">
+    <mat-option *ngFor="let item of filteredArrivalOptions" [value]="item.varisHavaalani">
+      {{item.varisHavaalani}}-{{item.varisCode}}
+    </mat-option>
+  </mat-autocomplete>
+  <mat-error *ngIf="flightForm.hasError('sameAirport', 'varisHavaalani')">
+    Kalkış ve varış havalimanı aynı olamaz.
+  </mat-error>
+</mat-form-field>
+
+
+<mat-form-field>
+  <mat-label>Kalkış Tarihi</mat-label>
+  <input formControlName="kalkisTarihi" matInput [matDatepicker]="picker" (dateChange)="addEvent($event)"  [min]="minDate">
+ 
+  <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+  <mat-datepicker #picker></mat-datepicker>
+</mat-form-field>
+
+
+<mat-form-field *ngIf="isDonusTarihiVisible()">
+  <mat-label>Dönüş Tarihi</mat-label>
+  <input formControlName="donusTarihi" matInput [matDatepicker]="picker1"  (dateChange)="addEvent1($event)" [min]="minDate" >
+
+  <mat-datepicker-toggle matIconSuffix [for]="picker1"></mat-datepicker-toggle>
+  <mat-datepicker #picker1 ></mat-datepicker>
+  <mat-error *ngIf="flightForm.get('donusTarihi')?.hasError('wrongDate')">
+    Dönüş tarihi, kalkış tarihinden önce olamaz!
+  </mat-error>
+</mat-form-field>
+
+
+
+<mat-form-field>
+  <mat-label>Gidiş/Dönüş</mat-label>
+  <mat-select formControlName="selectedDirect" >
+    <mat-option value="gidis">Sadece Gidiş</mat-option>
+    <mat-option  value="gidisDonus">Gidiş/Dönüş</mat-option>
+  
+  </mat-select>
+</mat-form-field>
+
+<div style="display: flex;justify-content:center">
+<button mat-raised-button (click)="search()" style="width: 35%;">Ara</button>
+</div>
+</form>
+
+
+</div>
+<div *ngIf="isLoading" class="loading-spinner">
+  <mat-spinner diameter="50"></mat-spinner>
+</div>
+<div *ngIf="isShow==true && dataSource.data.length !== 0" style="margin-top:4em">
+  <table mat-table class="mat-elevation-z8" [dataSource]="dataSource" matSort>
+
+    <ng-container matColumnDef="havayolu">
+      <th mat-header-cell *matHeaderCellDef>Havayolu</th>
+      <td mat-cell *matCellDef="let element"> {{ element.havayolu }} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="kalkisHavaalani">
+      <th mat-header-cell *matHeaderCellDef>Kalkış Havaalanı </th>
+      <td mat-cell *matCellDef="let element"> {{ element.kalkisHavaalani }} </td>
+    </ng-container>
+    <ng-container matColumnDef="varisHavaalani">
+      <th mat-header-cell *matHeaderCellDef>Varış Havaalanı</th>
+      <td mat-cell *matCellDef="let element"> {{ element.varisHavaalani }} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="kalkisSaati">
+      <th mat-header-cell *matHeaderCellDef>Kalkış Saati </th>
+      <td mat-cell *matCellDef="let element"> {{ element.kalkisSaati }} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="kalkisSehir">
+      <th mat-header-cell *matHeaderCellDef>Kalkış Şehri </th>
+      <td mat-cell *matCellDef="let element"> {{ element.kalkisSehir }} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="donusSaati" *ngIf="isDonusTarihiVisible()">
+      <th mat-header-cell *matHeaderCellDef  > Dönüş Saati </th>
+      <td mat-cell *matCellDef="let element"> {{ element.donusSaati }} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="donusSehir" *ngIf="isDonusTarihiVisible()">
+      <th mat-header-cell *matHeaderCellDef > Dönüş Şehri </th>
+      <td mat-cell *matCellDef="let element"> {{ element.donusSehir }} </td>
+    </ng-container>
+  
+    <ng-container matColumnDef="ucusUzunlugu">
+      <th mat-header-cell *matHeaderCellDef > Uzunluk </th>
+      <td mat-cell *matCellDef="let element"> {{ element.ucusUzunlugu }} </td>
+    </ng-container>
+  
+    <ng-container matColumnDef="fiyat" >
+      <th mat-header-cell *matHeaderCellDef  mat-sort-header> Fiyat </th>
+      <td mat-cell *matCellDef="let element"> {{ element.fiyat }} </td>
+    </ng-container>
+  
+   
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+
+  </table>
+ 
+</div>
+
+<div *ngIf="isShow==true&&dataSource.data.length === 0" class="no-results-message">
+  <h4 style="text-align: center;">Sonuç yoktur.</h4>
+</div>
+
+
+
+</div>
